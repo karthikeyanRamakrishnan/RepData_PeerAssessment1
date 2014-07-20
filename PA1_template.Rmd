@@ -1,20 +1,98 @@
-# Reproducible Research: Peer Assessment 1
-
-
+Reproduciable Research - Peer Assignment 1
+========================================================
 ## Loading and preprocessing the data
 
 
+```{r}
+x<-read.csv("activity.csv")
+y<-complete.cases(x)
+w<-x[y,]
 
-## What is mean total number of steps taken per day?
+```
+
+##  Total number of steps taken per day
+
+```{r Total no of steps, fig.width=6,fig.height=6}
+z<-aggregate(steps~date,w,sum)
+hist(z$steps,main="Total no of steps",xlab="No of steps",col="blue")
+
+```
+### Mean of total steps
+```{r}
+mean(z$steps)
+```
+### Median of total steps
+```{r}
+median(z$steps)
+```
+## Average daily activity pattern
 
 
+```{r Average daily activity pattern, fig.width=10,fig.height=8}
+temp<-aggregate(steps~interval,w,mean)
+temp$interval<-strptime(sprintf("%04d", as.numeric(as.character(temp$interval))), "%H%M")
+plot(temp$interval,temp$steps,type="l",main="Trend of steps",xlab="Timer Interval",ylab="No of steps")
 
-## What is the average daily activity pattern?
+```
 
+### 5-minute interval contains the maximum number of steps
 
+```{r}
+temp[(temp$steps==max(temp$steps)),]
 
+```
 ## Imputing missing values
 
+### Total number of missing values in the dataset 
+```{r}
+table(y)
 
+```
 
-## Are there differences in activity patterns between weekdays and weekends?
+###  Filling in all of the missing values & creation of new dataset.
+```{r}
+library(rrcovNA)
+xx<-as.data.frame(impSeq(x))
+
+```
+
+### Histogram of the total number of steps taken each day 
+```{r Total no of steps after imputaion, fig.width= 6,fig.height= 6}
+zz<-aggregate(steps~date,xx,sum)
+hist(zz$steps,main="Total no of steps after imputation",xlab="No of steps",col="blue")
+
+```
+
+### Mean of total steps
+```{r}
+mean(zz$steps)
+
+```
+### Median of total steps
+```{r}
+median(zz$steps)
+
+```
+
+## Activity patterns between weekdays and weekends
+
+### New data set with week levels
+
+```{r}
+xxx<-x
+xxx$steps<-xx$steps
+xxx$date<-as.Date(xxx$date)
+xxx$week<-as.factor(weekdays(xxx$date))
+library(plyr)
+library(ggplot2)
+xxx$week<-mapvalues(xxx$week, from = c("Friday","Monday","Thursday","Tuesday","Wednesday","Sunday","Saturday"), to = c( "weekday","weekday","weekday","weekday","weekday","weekend","weekend"))
+
+```
+
+### Plot of activity pattern in weekday & weekend
+
+```{r Activity pattern in weekday & weekend}
+df<-aggregate(steps~interval+week,xxx,mean)
+ggplot(df,aes(interval,steps))+geom_line()+facet_grid(week~.)
+
+```
